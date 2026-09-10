@@ -1,118 +1,318 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pulse — analytics overview</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Aster Cloud — Market momentum brief</title>
   <style>
     :root {
-      --bg: #fafaf9; --fg: #1c1b1a; --muted: #6b6964; --border: #e6e4e0;
-      --accent: #c96442; --surface: #ffffff; --good: #2f7d4a; --bad: #b53a2a;
+      --canvas: #090b10;
+      --panel: #11141b;
+      --panel-2: #151922;
+      --text: #f4f3ee;
+      --muted: #969aa6;
+      --line: #292e39;
+      --focus: #8da0ff;
+      --positive: #50d8ad;
+      --warning: #f2c66d;
+      --negative: #ff8a7c;
+      --violet: #bb9af7;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, system-ui, sans-serif; display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px; }
-    .brand { font-weight: 600; padding: 8px 10px 18px; }
-    .nav { display: flex; flex-direction: column; gap: 2px; }
-    .nav a { padding: 7px 10px; border-radius: 6px; color: var(--fg); text-decoration: none; }
-    .nav a.active { background: var(--bg); font-weight: 500; }
-    .nav a:hover { background: var(--bg); }
-    .nav .group-label { font-size: 11px; color: var(--muted); padding: 14px 10px 6px; text-transform: uppercase; letter-spacing: 0.06em; }
-    main { padding: 0 28px 56px; }
-    .topbar { padding: 16px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-    .topbar h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
-    .topbar .right { display: flex; align-items: center; gap: 12px; color: var(--muted); }
-    button { font: inherit; cursor: pointer; padding: 7px 13px; border-radius: 6px; }
-    .btn-primary { background: var(--accent); color: white; border: 1px solid var(--accent); }
-    .btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
-    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-    @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
-    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-    .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .kpi .value { font-size: 28px; letter-spacing: -0.02em; }
-    .kpi .delta { font-size: 12px; margin-top: 4px; }
-    .kpi .delta.up { color: var(--good); }
-    .kpi .delta.down { color: var(--bad); }
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    .panel h3 { margin: 0 0 16px; font-size: 14px; font-weight: 500; }
-    .chart { height: 240px; background: linear-gradient(180deg, rgba(201,100,66,0.06), transparent); border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
-    .chart svg { width: 100%; height: 100%; display: block; }
-    .panels-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-    @media (max-width: 900px) { .panels-row { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 10px 6px; border-top: 1px solid var(--border); }
-    th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
-    .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); }
-    .pill.good { color: var(--good); border-color: rgba(47,125,74,0.3); }
-    .pill.bad { color: var(--bad); border-color: rgba(181,58,42,0.3); }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; background: var(--canvas); color: var(--text); font-family: var(--font); line-height: 1.45; }
+    button { font: inherit; color: inherit; }
+    button:focus-visible, [tabindex="0"]:focus-visible { outline: 3px solid rgba(141,160,255,.55); outline-offset: 3px; }
+    .shell { min-height: 100vh; display: grid; grid-template-columns: 76px minmax(0,1fr); }
+    .rail { position: sticky; top: 0; height: 100vh; z-index: 8; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 20px 10px; background: rgba(9,11,16,.94); backdrop-filter: blur(18px); }
+    .logo { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #3a4050; border-radius: 12px; font-weight: 850; letter-spacing: -.05em; }
+    .rail nav { margin-top: 58px; display: grid; gap: 12px; }
+    .nav-button { width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; font-size: .72rem; font-weight: 760; }
+    .nav-button:hover, .nav-button[aria-current="true"] { background: var(--panel-2); color: var(--text); }
+    .rail-meta { margin-top: auto; writing-mode: vertical-rl; rotate: 180deg; color: #6c707c; font-size: .64rem; letter-spacing: .15em; text-transform: uppercase; }
+    main { min-width: 0; padding: clamp(26px,4vw,58px); }
+    .header { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 28px; align-items: end; }
+    .eyebrow { color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .eyebrow i { display: inline-block; width: 22px; height: 1px; margin: 0 9px 3px 0; background: currentColor; }
+    h1 { max-width: 940px; margin: 12px 0 0; font-size: clamp(2.35rem,5.8vw,6.2rem); font-weight: 690; line-height: .91; letter-spacing: -.07em; }
+    h1 span { color: var(--focus); }
+    .demo-badge { display: inline-flex; gap: 8px; align-items: center; margin-top: 22px; color: var(--warning); font-size: .78rem; }
+    .demo-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 5px rgba(242,198,109,.1); }
+    .actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+    .periods { display: flex; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+    .periods button { min-width: 48px; min-height: 34px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+    .periods button[aria-pressed="true"] { background: var(--text); color: var(--canvas); font-weight: 780; }
+    .copy { min-height: 39px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+    .copy:hover { color: var(--text); border-color: #4b5262; }
+    .kpis { margin: 44px 0 28px; display: grid; grid-template-columns: 1.25fr repeat(3,1fr); border-block: 1px solid var(--line); }
+    .kpi { min-width: 0; padding: 22px clamp(15px,2vw,28px); border-right: 1px solid var(--line); }
+    .kpi:first-child { padding-left: 0; }
+    .kpi:last-child { border-right: 0; }
+    .kpi-label { color: var(--muted); font-size: .71rem; letter-spacing: .08em; text-transform: uppercase; }
+    .kpi-value { margin: 9px 0 5px; font-size: clamp(2rem,3.4vw,4rem); line-height: 1; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+    .kpi:first-child .kpi-value { color: var(--focus); }
+    .kpi-delta { color: var(--muted); font-size: .78rem; }
+    .kpi-delta strong { color: var(--positive); }
+    .narrative { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(270px,.65fr); gap: 22px; }
+    .panel { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .panel-head { padding: 22px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    h2 { margin: 0; font-size: 1.04rem; letter-spacing: -.02em; }
+    .sub { margin: 5px 0 0; color: var(--muted); font-size: .78rem; }
+    .measure-toggle { display: flex; gap: 6px; }
+    .measure-toggle button { padding: 6px 9px; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: .74rem; }
+    .measure-toggle button[aria-pressed="true"] { color: var(--text); border-color: var(--focus); }
+    .chart-stage { position: relative; padding: 10px 15px 0 4px; }
+    #chart { display: block; width: 100%; min-height: 360px; overflow: visible; }
+    .grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 5; }
+    .axis { fill: var(--muted); font: 11px var(--font); }
+    .area { fill: rgba(141,160,255,.08); }
+    .line { fill: none; stroke: var(--focus); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .benchmark { fill: none; stroke: #596174; stroke-width: 1.4; stroke-dasharray: 5 6; }
+    .visible-point { fill: var(--panel); stroke: var(--focus); stroke-width: 2; pointer-events: none; }
+    .hit-point { fill: transparent; stroke: transparent; stroke-width: 18; cursor: pointer; }
+    .event-line { stroke: var(--warning); stroke-width: 1; stroke-dasharray: 3 4; }
+    .event-dot { fill: var(--warning); }
+    .bar { fill: var(--focus); opacity: .78; }
+    .tooltip { position: absolute; min-width: 145px; z-index: 5; padding: 10px 12px; transform: translate(-50%,calc(-100% - 10px)); border: 1px solid #3b4252; border-radius: 11px; background: #080a0f; box-shadow: 0 12px 34px rgba(0,0,0,.38); font-size: .75rem; pointer-events: none; }
+    .tooltip strong { display: block; margin-bottom: 3px; }
+    .chart-summary { margin: 0; padding: 0 24px 20px; color: var(--muted); font-size: .79rem; }
+    .story { padding: 25px; display: flex; flex-direction: column; }
+    .story-lead { margin: 16px 0 26px; font-size: clamp(1.25rem,2vw,1.72rem); line-height: 1.22; letter-spacing: -.035em; }
+    .story-lead strong { color: var(--positive); }
+    .story-list { list-style: none; margin: 0; padding: 0; }
+    .story-item { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 17px 0; border-top: 1px solid var(--line); }
+    .story-item button { width: 26px; height: 26px; border: 1px solid #3b4150; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; font-size: .7rem; }
+    .story-item button[aria-pressed="true"] { border-color: var(--warning); color: var(--warning); }
+    .story-item strong { display: block; font-size: .86rem; }
+    .story-item p { margin: 4px 0 0; color: var(--muted); font-size: .77rem; }
+    .lower { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(330px,.88fr); gap: 22px; margin-top: 22px; }
+    .drivers { padding: 24px; }
+    .driver-list { margin-top: 23px; display: grid; gap: 18px; }
+    .driver { display: grid; grid-template-columns: 125px minmax(0,1fr) 68px; gap: 14px; align-items: center; font-size: .78rem; }
+    .track { height: 7px; border-radius: 99px; background: #242936; overflow: hidden; }
+    .fill { width: var(--size); height: 100%; border-radius: inherit; background: var(--positive); }
+    .driver:nth-child(3) .fill { background: var(--violet); }
+    .driver:nth-child(4) .fill { background: var(--negative); }
+    .driver-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 760; }
+    .detail { padding-bottom: 5px; }
+    .detail table { width: 100%; border-collapse: collapse; font-size: .77rem; }
+    th, td { padding: 13px 18px; border-top: 1px solid var(--line); text-align: left; white-space: nowrap; }
+    th { color: var(--muted); font-size: .66rem; text-transform: uppercase; letter-spacing: .08em; }
+    th:nth-child(n+2), td:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover, tbody tr[aria-selected="true"] { background: #181d27; }
+    .signal { font-weight: 760; }
+    .signal.up { color: var(--positive); }
+    .signal.watch { color: var(--warning); }
+    .footer { margin-top: 20px; display: flex; justify-content: space-between; gap: 18px; color: #737783; font-size: .68rem; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 20; padding: 11px 15px; border: 1px solid #3c4352; border-radius: 11px; background: var(--text); color: var(--canvas); box-shadow: 0 15px 45px rgba(0,0,0,.4); font-size: .8rem; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media (max-width: 1080px) {
+      .kpis { grid-template-columns: repeat(2,1fr); }
+      .kpi:nth-child(2) { border-right: 0; }
+      .kpi:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .kpi:nth-child(3) { padding-left: 0; }
+      .narrative, .lower { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 690px) {
+      .shell { display: block; }
+      .rail { height: auto; padding: 9px 14px; flex-direction: row; justify-content: space-between; }
+      .rail nav { margin: 0; display: flex; }
+      .rail-meta { display: none; }
+      main { padding: 26px 15px 44px; }
+      .header { display: block; }
+      .actions { margin-top: 22px; align-items: flex-start; }
+      .kpis { grid-template-columns: 1fr; margin-top: 30px; }
+      .kpi, .kpi:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--line); padding-left: 0; }
+      .kpi:last-child { border-bottom: 0; }
+      .panel-head { display: block; }
+      .measure-toggle { margin-top: 11px; }
+      #chart { min-height: 285px; }
+      .driver { grid-template-columns: 94px minmax(0,1fr) 54px; }
+      .footer { display: block; }
+      .footer span { display: block; margin-top: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
 <body>
-  <aside class="sidebar" data-od-id="sidebar">
-    <div class="brand">◐ Pulse</div>
-    <nav class="nav">
-      <a href="#" class="active">Overview</a>
-      <a href="#">Funnels</a>
-      <a href="#">Cohorts</a>
-      <a href="#">Sessions</a>
-      <span class="group-label">Workspace</span>
-      <a href="#">Sources</a>
-      <a href="#">Members</a>
-      <a href="#">Billing</a>
-      <a href="#">Settings</a>
-    </nav>
-  </aside>
-  <main>
-    <div class="topbar" data-od-id="topbar">
-      <h1>Overview · April 2026</h1>
-      <div class="right">
-        <button class="btn-secondary">Last 30 days ▾</button>
-        <button class="btn-primary">+ New report</button>
-      </div>
-    </div>
+  <!-- Layout inspiration: event-led financial dashboards. All content, data,
+       marks, and styling below were independently created for this example. -->
+  <div class="shell">
+    <aside class="rail" aria-label="Brief sections">
+      <div class="logo" aria-label="Aster Cloud">AC</div>
+      <nav>
+        <button class="nav-button" type="button" data-target="brief" aria-label="Market brief" aria-current="true">01</button>
+        <button class="nav-button" type="button" data-target="drivers" aria-label="Performance drivers">02</button>
+        <button class="nav-button" type="button" data-target="segments" aria-label="Segment detail">03</button>
+      </nav>
+      <div class="rail-meta">Market intelligence · 2026</div>
+    </aside>
 
-    <div class="kpis" data-od-id="kpis">
-      <div class="kpi"><div class="label">MRR</div><div class="value">$48.2K</div><div class="delta up">+12.4% MoM</div></div>
-      <div class="kpi"><div class="label">Active accounts</div><div class="value">3,184</div><div class="delta up">+204 this month</div></div>
-      <div class="kpi"><div class="label">Churn (30d)</div><div class="value">2.1%</div><div class="delta down">+0.4 pp</div></div>
-      <div class="kpi"><div class="label">P95 latency</div><div class="value">182 ms</div><div class="delta up">-23 ms</div></div>
-    </div>
-
-    <div class="panels-row">
-      <div class="panel" data-od-id="chart-panel">
-        <h3>Revenue · 30 days</h3>
-        <div class="chart">
-          <svg viewBox="0 0 600 240" preserveAspectRatio="none">
-            <polyline fill="none" stroke="#c96442" stroke-width="2" points="0,180 30,170 60,150 90,160 120,140 150,120 180,130 210,110 240,90 270,100 300,80 330,70 360,80 390,60 420,50 450,60 480,40 510,30 540,40 570,20 600,10" />
-          </svg>
+    <main>
+      <header class="header" id="brief">
+        <div>
+          <div class="eyebrow"><i></i>Executive signal · Aster Cloud</div>
+          <h1>Momentum is broadening.<br><span>Risk is not.</span></h1>
+          <div class="demo-badge">Illustrative demo data · not investment information</div>
         </div>
-      </div>
-      <div class="panel" data-od-id="signups-panel">
-        <h3>New accounts</h3>
-        <table>
-          <thead><tr><th>Account</th><th>Plan</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>Linear</td><td>Team</td><td><span class="pill good">active</span></td></tr>
-            <tr><td>Cursor</td><td>Pro</td><td><span class="pill good">active</span></td></tr>
-            <tr><td>Notion</td><td>Team</td><td><span class="pill bad">trial</span></td></tr>
-            <tr><td>Vercel</td><td>Enterprise</td><td><span class="pill good">active</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <div class="actions">
+          <div class="periods" aria-label="Analysis period">
+            <button type="button" data-period="QTD" aria-pressed="false">QTD</button>
+            <button type="button" data-period="YTD" aria-pressed="true">YTD</button>
+            <button type="button" data-period="1Y" aria-pressed="false">1Y</button>
+            <button type="button" data-period="3Y" aria-pressed="false">3Y</button>
+          </div>
+          <button class="copy" type="button" id="copyBrief">Copy executive brief</button>
+        </div>
+      </header>
 
-    <div class="panel" data-od-id="recent-events">
-      <h3>Recent events</h3>
-      <table>
-        <thead><tr><th>Time</th><th>Account</th><th>Event</th><th>Plan</th></tr></thead>
-        <tbody>
-          <tr><td>2:14 pm</td><td>Acme Co</td><td>Upgraded to Team</td><td>Team</td></tr>
-          <tr><td>1:48 pm</td><td>Northwind</td><td>Connected GitHub</td><td>Pro</td></tr>
-          <tr><td>1:32 pm</td><td>Globex</td><td>Cancelled subscription</td><td>Solo</td></tr>
-          <tr><td>12:51 pm</td><td>Initech</td><td>New seat invited</td><td>Team</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
+      <section class="kpis" id="kpis" aria-label="Headline market measures"></section>
+
+      <section class="narrative" aria-label="Market narrative">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="chartTitle">Aster momentum index</h2>
+              <p class="sub" id="chartSub">Indexed points · YTD · benchmark shown</p>
+            </div>
+            <div class="measure-toggle" aria-label="Chart measure">
+              <button type="button" data-measure="price" aria-pressed="true">Momentum</button>
+              <button type="button" data-measure="volume" aria-pressed="false">Volume</button>
+            </div>
+          </div>
+          <div class="chart-stage" id="chartStage">
+            <svg id="chart" viewBox="0 0 820 380" role="img" aria-labelledby="chartTitle chartSummary"></svg>
+            <div class="tooltip" id="tooltip" hidden></div>
+          </div>
+          <p class="chart-summary" id="chartSummary"></p>
+        </article>
+
+        <aside class="panel story" aria-labelledby="storyTitle">
+          <div class="eyebrow">Read the movement</div>
+          <p class="story-lead" id="storyTitle">The index finished <strong>18.4% higher</strong>, with the sharpest acceleration after the platform release.</p>
+          <ol class="story-list" id="events"></ol>
+        </aside>
+      </section>
+
+      <section class="lower">
+        <article class="panel drivers" id="drivers">
+          <div class="eyebrow">Decomposition</div>
+          <h2>What contributed to the move</h2>
+          <p class="sub">Illustrative contribution to YTD index change · points</p>
+          <div class="driver-list" id="driverList"></div>
+        </article>
+
+        <article class="panel detail" id="segments">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Segment lens</div>
+              <h2>Strength is uneven</h2>
+              <p class="sub" id="rowNote">Select a row to inspect its signal.</p>
+            </div>
+          </div>
+          <div style="overflow-x:auto;margin-top:14px">
+            <table>
+              <caption class="sr-only">Illustrative segment momentum</caption>
+              <thead><tr><th>Segment</th><th>Change</th><th>Mix</th><th>Signal</th></tr></thead>
+              <tbody id="segmentsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <span>Source: coherent illustrative dataset embedded in this file</span>
+        <span id="freshness">Refreshed for example preview · YTD selected</span>
+      </footer>
+    </main>
+  </div>
+  <div class="toast" role="status" id="toast" hidden></div>
+
+  <script>
+    const periods = {
+      QTD: { labels:["Apr","May","Jun","Jul","Aug","Sep"], price:[342,356,350,372,381,396], volume:[28,34,31,42,46,53], benchmark:[344,349,354,360,366,372], return:"+11.2%", index:"396.2", risk:"24", quality:"68", summary:"Momentum rose 11.2% quarter to date; the July release marks the clearest acceleration." },
+      YTD: { labels:["Jan","Mar","May","Jul","Sep","Now"], price:[318,337,351,374,401,428], volume:[24,29,36,44,51,59], benchmark:[321,333,345,358,371,384], return:"+18.4%", index:"428.6", risk:"21", quality:"72", summary:"Momentum rose 18.4% year to date and finished 44.6 points above the illustrative benchmark." },
+      "1Y": { labels:["Oct","Dec","Feb","Apr","Jun","Aug","Now"], price:[294,306,329,343,357,392,429], volume:[21,25,28,34,39,50,61], benchmark:[297,309,321,335,350,367,386], return:"+27.7%", index:"428.6", risk:"23", quality:"70", summary:"Over one year, momentum advanced 27.7%; most of the separation from benchmark occurred in the latest four months." },
+      "3Y": { labels:["2023","H2 23","2024","H2 24","2025","H2 25","Now"], price:[188,224,218,276,304,347,429], volume:[16,23,20,32,38,46,62], benchmark:[194,211,231,253,278,311,349], return:"+91.5%", index:"428.6", risk:"29", quality:"64", summary:"Across three years, momentum nearly doubled, but the wider range raises the illustrative risk score to 29%." }
+    };
+    const eventCopy = [
+      { label:"01", title:"Platform release", body:"Adoption accelerated after the July milestone.", index:3 },
+      { label:"02", title:"Enterprise expansion", body:"Larger accounts increased their share of the move.", index:4 },
+      { label:"03", title:"Risk stayed contained", body:"Volatility did not rise with the latest advance.", index:5 }
+    ];
+    const drivers = [["Core adoption",82,"+51.2"],["Enterprise mix",61,"+33.7"],["Platform attach",44,"+22.9"],["Risk drag",19,"−8.4"]];
+    const segments = [["Enterprise","+24.8%","42%","Leading","up"],["Core cloud","+17.2%","36%","Healthy","up"],["Developer","+8.6%","14%","Watch","watch"],["Legacy","−3.1%","8%","Watch","watch"]];
+    let activePeriod = "YTD", activeMeasure = "price", activeEvent = 0;
+    const chart = document.getElementById("chart"), stage = document.getElementById("chartStage"), tooltip = document.getElementById("tooltip");
+
+    function pointsFor(values) {
+      const left=62,right=788,top=32,bottom=322,min=Math.min(...values)-12,max=Math.max(...values)+12;
+      return values.map((value,index)=>({ value, x:left+index*(right-left)/Math.max(1,values.length-1), y:bottom-(value-min)/(max-min)*(bottom-top) }));
+    }
+    function pathOf(points) { return points.map((p,i)=>`${i?"L":"M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "); }
+    function renderChart() {
+      const set=periods[activePeriod], values=set[activeMeasure], pts=pointsFor(values), line=pathOf(pts);
+      const grid=[56,122,188,254,322].map(y=>`<line class="grid" x1="62" y1="${y}" x2="788" y2="${y}"/>`).join("");
+      const xLabels=set.labels.map((label,i)=>`<text class="axis" text-anchor="middle" x="${pts[i].x}" y="351">${label}</text>`).join("");
+      const low=Math.min(...values), high=Math.max(...values), mid=Math.round((low+high)/2);
+      const yLabels=[high,mid,low].map((v,i)=>`<text class="axis" text-anchor="end" x="49" y="${[60,191,326][i]}">${v}</text>`).join("");
+      if(activeMeasure === "volume") {
+        const barWidth=Math.min(52,520/values.length);
+        const bars=pts.map((p,i)=>`<rect class="bar" tabindex="0" role="button" aria-label="${set.labels[i]} volume ${p.value}" data-index="${i}" x="${p.x-barWidth/2}" y="${p.y}" width="${barWidth}" height="${322-p.y}" rx="4"/>`).join("");
+        chart.innerHTML=`${grid}${bars}${xLabels}${yLabels}`;
+      } else {
+        const benchPts=pointsFor(set.benchmark), bench=pathOf(benchPts);
+        const marks=pts.map((p,i)=>`<g><circle class="hit-point" tabindex="0" role="button" aria-label="${set.labels[i]} momentum ${p.value}" data-index="${i}" cx="${p.x}" cy="${p.y}" r="10"/><circle class="visible-point" cx="${p.x}" cy="${p.y}" r="4"/></g>`).join("");
+        const event=eventCopy[activeEvent], eventPoint=pts[Math.min(event.index,pts.length-1)];
+        chart.innerHTML=`${grid}<path class="benchmark" d="${bench}"/><path class="area" d="${line} L${pts.at(-1).x},322 L${pts[0].x},322 Z"/><path class="line" d="${line}"/>${marks}<line class="event-line" x1="${eventPoint.x}" y1="${eventPoint.y}" x2="${eventPoint.x}" y2="322"/><circle class="event-dot" cx="${eventPoint.x}" cy="${eventPoint.y}" r="5"/>${xLabels}${yLabels}`;
+      }
+      chart.querySelectorAll("[data-index]").forEach(mark=>{
+        const reveal=()=>showTip(mark,set.labels[mark.dataset.index],values[mark.dataset.index]);
+        mark.addEventListener("mouseenter",reveal); mark.addEventListener("focus",reveal);
+        mark.addEventListener("mouseleave",hideTip); mark.addEventListener("blur",hideTip);
+      });
+      document.getElementById("chartTitle").textContent=activeMeasure === "price" ? "Aster momentum index" : "Observed activity volume";
+      document.getElementById("chartSub").textContent=`${activeMeasure === "price" ? "Indexed points · benchmark shown" : "Illustrative activity units"} · ${activePeriod}`;
+      document.getElementById("chartSummary").textContent=set.summary;
+    }
+    function showTip(mark,label,value) {
+      const svgRect=chart.getBoundingClientRect(),stageRect=stage.getBoundingClientRect();
+      const x=mark.cx ? mark.cx.baseVal.value : Number(mark.getAttribute("x"))+Number(mark.getAttribute("width"))/2;
+      const y=mark.cy ? mark.cy.baseVal.value : Number(mark.getAttribute("y"));
+      tooltip.innerHTML=`<strong>${label}</strong>${activeMeasure === "price" ? "Momentum index" : "Volume"}: ${value}`;
+      tooltip.hidden=false; tooltip.style.left=`${x/820*svgRect.width+svgRect.left-stageRect.left}px`; tooltip.style.top=`${y/380*svgRect.height+svgRect.top-stageRect.top}px`;
+    }
+    function hideTip(){ tooltip.hidden=true; }
+    function renderKpis() {
+      const set=periods[activePeriod];
+      const items=[["Momentum index",set.index,`${set.return} for ${activePeriod}`],["Period return",set.return,"vs period open"],["Signal quality",`${set.quality}/100`,`+5 pts vs prior`],["Risk band",`${set.risk}%`,`−3 pts vs prior`]];
+      document.getElementById("kpis").innerHTML=items.map(([label,value,delta])=>`<article class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-delta"><strong>${delta.split(" ")[0]}</strong> ${delta.split(" ").slice(1).join(" ")}</div></article>`).join("");
+      document.getElementById("storyTitle").innerHTML=`The index finished <strong>${set.return} higher</strong>, with the sharpest acceleration after the platform release.`;
+      document.getElementById("freshness").textContent=`Refreshed for example preview · ${activePeriod} selected`;
+    }
+    function renderEvents() {
+      document.getElementById("events").innerHTML=eventCopy.map((event,i)=>`<li class="story-item"><button type="button" data-event="${i}" aria-pressed="${i===activeEvent}" aria-label="Highlight ${event.title}">${event.label}</button><div><strong>${event.title}</strong><p>${event.body}</p></div></li>`).join("");
+      document.querySelectorAll("[data-event]").forEach(button=>button.addEventListener("click",()=>{ activeEvent=Number(button.dataset.event); renderEvents(); renderChart(); }));
+    }
+    document.getElementById("driverList").innerHTML=drivers.map(([name,size,value])=>`<div class="driver"><span>${name}</span><div class="track" aria-hidden="true"><div class="fill" style="--size:${size}%"></div></div><span class="driver-value">${value}</span></div>`).join("");
+    document.getElementById("segmentsBody").innerHTML=segments.map(([name,change,mix,signal,tone],i)=>`<tr tabindex="0" aria-selected="${i===0}" data-name="${name}" data-change="${change}" data-signal="${signal}"><td>${name}</td><td>${change}</td><td>${mix}</td><td class="signal ${tone}">${signal}</td></tr>`).join("");
+    document.querySelectorAll("[data-period]").forEach(button=>button.addEventListener("click",()=>{ activePeriod=button.dataset.period; document.querySelectorAll("[data-period]").forEach(item=>item.setAttribute("aria-pressed",String(item===button))); renderKpis(); renderChart(); }));
+    document.querySelectorAll("[data-measure]").forEach(button=>button.addEventListener("click",()=>{ activeMeasure=button.dataset.measure; document.querySelectorAll("[data-measure]").forEach(item=>item.setAttribute("aria-pressed",String(item===button))); renderChart(); }));
+    document.querySelectorAll("[data-target]").forEach(button=>button.addEventListener("click",()=>{ document.getElementById(button.dataset.target).scrollIntoView({behavior:"smooth",block:"start"}); document.querySelectorAll("[data-target]").forEach(item=>item.setAttribute("aria-current",String(item===button))); }));
+    document.querySelectorAll("tbody tr").forEach(row=>{
+      const select=()=>{ document.querySelectorAll("tbody tr").forEach(item=>item.setAttribute("aria-selected",String(item===row))); document.getElementById("rowNote").textContent=`${row.dataset.name}: ${row.dataset.change}; signal is ${row.dataset.signal.toLowerCase()}.`; };
+      row.addEventListener("click",select); row.addEventListener("keydown",event=>{ if(event.key==="Enter"||event.key===" "){ event.preventDefault(); select(); } });
+    });
+    document.getElementById("copyBrief").addEventListener("click",async()=>{
+      const brief=`Aster Cloud illustrative brief (${activePeriod}): ${periods[activePeriod].summary}`;
+      try { await navigator.clipboard.writeText(brief); toast("Executive brief copied"); }
+      catch { toast("Copy unavailable — select the chart summary instead"); }
+    });
+    function toast(message){ const node=document.getElementById("toast"); node.textContent=message; node.hidden=false; setTimeout(()=>node.hidden=true,2200); }
+    renderKpis(); renderEvents(); renderChart();
+  </script>
 </body>
 </html>

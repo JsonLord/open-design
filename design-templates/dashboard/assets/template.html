@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Decision dashboard</title>
+  <style>
+    /* Replace fallbacks with the active DESIGN.md tokens where available. */
+    :root {
+      --dash-canvas: var(--surface-canvas, #090b10);
+      --dash-panel: var(--surface-raised, rgba(18, 21, 28, .82));
+      --dash-panel-strong: var(--surface-strong, rgba(27, 31, 40, .94));
+      --dash-text: var(--text-primary, #f3f3ef);
+      --dash-on-strong: var(--text-on-strong, #f8f7f2);
+      --dash-muted: var(--text-secondary, #969aa5);
+      --dash-line: var(--border-subtle, rgba(255, 255, 255, .10));
+      --dash-focus: var(--accent, #8da0ff);
+      --dash-positive: var(--positive, #50d8ad);
+      --dash-warning: var(--warning, #f2c66d);
+      --dash-negative: var(--negative, #ff8a7c);
+      --dash-series-2: var(--data-series-2, #bb9af7);
+      --dash-series-3: var(--data-series-3, #55bdd0);
+      --dash-radius: var(--radius-lg, 20px);
+      --dash-shadow: 0 18px 60px rgba(0, 0, 0, .26);
+      --dash-font: var(--font-sans, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--dash-canvas);
+      color: var(--dash-text);
+      font-family: var(--dash-font);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--dash-focus), transparent 42%);
+      outline-offset: 3px;
+    }
+
+    .app { min-height: 100vh; display: grid; grid-template-columns: 88px minmax(0, 1fr); }
+    .rail {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      height: 100vh;
+      padding: 22px 14px;
+      background: var(--dash-panel-strong);
+      color: var(--dash-on-strong);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+    .mark {
+      width: 44px;
+      aspect-ratio: 1;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: var(--dash-on-strong);
+      color: var(--dash-panel-strong);
+      font-weight: 850;
+      letter-spacing: -.04em;
+    }
+    .rail-nav { display: grid; gap: 10px; }
+    .rail-nav button {
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      color: color-mix(in srgb, var(--dash-on-strong), transparent 42%);
+      cursor: pointer;
+    }
+    .rail-nav button:hover, .rail-nav button[aria-current="true"] {
+      color: var(--dash-on-strong);
+      background: rgba(255,255,255,.11);
+    }
+    .rail-status { margin-top: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--dash-positive); box-shadow: 0 0 0 5px rgba(18,130,104,.18); }
+
+    main { min-width: 0; padding: clamp(24px, 3.5vw, 54px); }
+    .topline { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 34px; }
+    .eyebrow { color: var(--dash-muted); font-size: .74rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 7px 0 0; font-size: clamp(2rem, 4vw, 4.6rem); line-height: .98; letter-spacing: -.06em; max-width: 850px; }
+    .top-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+    .control, .segmented button {
+      min-height: 40px;
+      border: 1px solid var(--dash-line);
+      border-radius: 999px;
+      padding: 9px 14px;
+      background: color-mix(in srgb, var(--dash-panel), transparent 15%);
+      cursor: pointer;
+    }
+    .control:hover { border-color: var(--dash-muted); }
+    .segmented { display: inline-flex; padding: 4px; border: 1px solid var(--dash-line); border-radius: 999px; background: var(--dash-panel); }
+    .segmented button { min-height: 32px; border: 0; padding: 5px 12px; background: transparent; color: var(--dash-muted); }
+    .segmented button[aria-pressed="true"] { color: var(--dash-on-strong); background: var(--dash-panel-strong); }
+
+    .status-line {
+      margin: 0 0 22px;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      border-left: 4px solid var(--dash-focus);
+      background: color-mix(in srgb, var(--dash-panel), transparent 25%);
+    }
+    .status-line strong { font-size: 1.05rem; }
+    .freshness { color: var(--dash-muted); white-space: nowrap; font-size: .86rem; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--dash-line); margin-bottom: 28px; }
+    .kpi { padding: 22px clamp(14px, 2.2vw, 30px); border-right: 1px solid var(--dash-line); }
+    .kpi:last-child { border-right: 0; }
+    .kpi-label { color: var(--dash-muted); font-size: .78rem; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
+    .kpi-value { margin: 8px 0 4px; font-size: clamp(1.7rem, 3vw, 3.1rem); font-weight: 780; letter-spacing: -.055em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .kpi-compare { color: var(--dash-muted); font-size: .84rem; }
+    .kpi-compare b { color: var(--dash-positive); }
+    .kpi[data-tone="negative"] .kpi-value, .kpi[data-tone="negative"] .kpi-compare b { color: var(--dash-negative); }
+    .kpi[data-tone="result"] .kpi-value { color: var(--dash-focus); }
+
+    .story-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(270px, .7fr); gap: 22px; align-items: stretch; }
+    .panel { min-width: 0; border: 1px solid var(--dash-line); border-radius: var(--dash-radius); background: var(--dash-panel); box-shadow: var(--dash-shadow); backdrop-filter: blur(18px); }
+    .panel-head { padding: 22px 24px 0; display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+    .panel h2 { margin: 0; font-size: 1.04rem; letter-spacing: -.025em; }
+    .panel-sub { margin: 5px 0 0; color: var(--dash-muted); font-size: .85rem; }
+    .chart-wrap { position: relative; padding: 14px 16px 12px 8px; }
+    .chart-wrap svg { display: block; width: 100%; min-height: 320px; overflow: visible; }
+    .grid-line { stroke: var(--dash-line); stroke-width: 1; }
+    .axis-label { fill: var(--dash-muted); font-size: 11px; font-family: var(--dash-font); }
+    .series { fill: none; stroke: var(--dash-focus); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .area { fill: color-mix(in srgb, var(--dash-focus), transparent 88%); }
+    .point-hit { fill: transparent; stroke: transparent; stroke-width: 16; cursor: pointer; }
+    .point-mark { fill: var(--dash-panel); stroke: var(--dash-focus); stroke-width: 2.5; pointer-events: none; }
+    .tooltip {
+      position: absolute;
+      z-index: 4;
+      min-width: 130px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--dash-panel-strong);
+      color: var(--dash-on-strong);
+      box-shadow: 0 12px 30px rgba(0,0,0,.2);
+      font-size: .78rem;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 10px));
+    }
+    .chart-summary { padding: 0 24px 22px; color: var(--dash-muted); font-size: .86rem; }
+
+    .insights { padding: 24px; display: flex; flex-direction: column; }
+    .insight-list { list-style: none; padding: 10px 0 0; margin: 0; }
+    .insight { padding: 18px 0; border-bottom: 1px solid var(--dash-line); }
+    .insight:last-child { border-bottom: 0; }
+    .insight-index { color: var(--dash-focus); font-size: .72rem; font-weight: 850; }
+    .insight strong { display: block; margin: 5px 0; line-height: 1.28; }
+    .insight p { margin: 0; color: var(--dash-muted); font-size: .86rem; }
+    .insights .control { margin-top: auto; align-self: flex-start; }
+
+    .detail-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: 22px; margin-top: 22px; }
+    .drivers { padding: 24px; }
+    .bars { display: grid; gap: 17px; margin-top: 24px; }
+    .bar-row { display: grid; grid-template-columns: minmax(90px, 160px) minmax(0, 1fr) 58px; gap: 14px; align-items: center; font-size: .85rem; }
+    .bar-track { height: 9px; background: color-mix(in srgb, var(--dash-line), transparent 25%); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; width: var(--value); background: var(--dash-series-3); border-radius: inherit; }
+    .bar-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 720; }
+
+    .exceptions { overflow: hidden; }
+    .table-wrap { overflow-x: auto; padding: 10px 0 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    th, td { padding: 13px 18px; text-align: left; border-bottom: 1px solid var(--dash-line); white-space: nowrap; }
+    th { color: var(--dash-muted); font-size: .71rem; letter-spacing: .06em; text-transform: uppercase; }
+    th:nth-child(n+2), td:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover, tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--dash-focus), transparent 92%); }
+    .state { font-weight: 760; }
+    .state.warn { color: var(--dash-warning); }
+    .state.bad { color: var(--dash-negative); }
+
+    .demo-note { margin-top: 22px; color: var(--dash-muted); font-size: .78rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 20; padding: 12px 16px; border-radius: 12px; background: var(--dash-panel-strong); color: var(--dash-on-strong); box-shadow: var(--dash-shadow); }
+
+    @media (max-width: 1050px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .kpi:nth-child(2) { border-right: 0; }
+      .kpi:nth-child(-n+2) { border-bottom: 1px solid var(--dash-line); }
+      .story-grid, .detail-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .app { display: block; }
+      .rail { position: sticky; height: auto; padding: 10px 16px; flex-direction: row; justify-content: space-between; }
+      .mark { width: 38px; border-radius: 11px; }
+      .rail-nav { display: flex; }
+      .rail-nav button { width: 42px; height: 42px; }
+      .rail-status { margin: 0 0 0 auto; }
+      main { padding: 24px 16px 40px; }
+      .topline { display: block; margin-bottom: 22px; }
+      .top-actions { justify-content: flex-start; margin-top: 18px; }
+      .status-line { display: block; }
+      .freshness { display: block; margin-top: 7px; }
+      .kpis { grid-template-columns: 1fr; }
+      .kpi, .kpi:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--dash-line); }
+      .kpi:last-child { border-bottom: 0; }
+      .panel-head { display: block; }
+      .segmented { margin-top: 12px; }
+      .bar-row { grid-template-columns: 100px minmax(0, 1fr) 48px; }
+      .chart-wrap svg { min-height: 260px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail" aria-label="Dashboard sections">
+      <div class="mark" aria-label="Product mark">D</div>
+      <nav class="rail-nav">
+        <button type="button" aria-label="Go to overview" aria-current="true" data-scroll="overview">01</button>
+        <button type="button" aria-label="Go to drivers" data-scroll="drivers">02</button>
+        <button type="button" aria-label="Go to exceptions" data-scroll="exceptions">03</button>
+      </nav>
+      <span class="rail-status" title="Demo ready"></span>
+    </aside>
+
+    <main>
+      <header class="topline" id="overview">
+        <div>
+          <div class="eyebrow">[Audience] · [Scope]</div>
+          <h1>[Decision-led dashboard title]</h1>
+        </div>
+        <div class="top-actions">
+          <div class="segmented" aria-label="Reporting period">
+            <button type="button" data-period="30D" aria-pressed="true">30D</button>
+            <button type="button" data-period="90D" aria-pressed="false">90D</button>
+            <button type="button" data-period="YTD" aria-pressed="false">YTD</button>
+          </div>
+          <button class="control" type="button" id="copySummary">Copy summary</button>
+        </div>
+      </header>
+
+      <section class="status-line" aria-labelledby="statusHeading">
+        <strong id="statusHeading">[State the most important signal and its implication.]</strong>
+        <span class="freshness">Illustrative demo data · Updated just now</span>
+      </section>
+
+      <section class="kpis" aria-label="Headline measures" id="kpiGrid"></section>
+
+      <section class="story-grid" aria-label="Primary analysis">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="chartTitle">[Primary outcome] over time</h2>
+              <p class="panel-sub">[Unit] · compared with [benchmark]</p>
+            </div>
+            <div class="segmented" aria-label="Chart measure">
+              <button type="button" data-measure="outcome" aria-pressed="true">Outcome</button>
+              <button type="button" data-measure="volume" aria-pressed="false">Volume</button>
+            </div>
+          </div>
+          <div class="chart-wrap" id="chartWrap">
+            <svg id="chart" viewBox="0 0 780 360" role="img" aria-labelledby="chartTitle chartDesc"></svg>
+            <div class="tooltip" id="tooltip" hidden></div>
+          </div>
+          <p class="chart-summary" id="chartDesc"></p>
+        </article>
+
+        <aside class="panel insights" aria-labelledby="insightTitle">
+          <div class="eyebrow">Interpretation</div>
+          <h2 id="insightTitle">What changed</h2>
+          <ol class="insight-list" id="insightList"></ol>
+          <button class="control" type="button" id="cycleInsight">Next insight</button>
+        </aside>
+      </section>
+
+      <section class="detail-grid">
+        <article class="panel drivers" id="drivers">
+          <div class="eyebrow">Contribution</div>
+          <h2>Drivers of the result</h2>
+          <p class="panel-sub">[Explain the comparison basis and whether drivers are observed or inferred.]</p>
+          <div class="bars" id="driverBars"></div>
+        </article>
+
+        <article class="panel exceptions" id="exceptions">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Action queue</div>
+              <h2>Exceptions to review</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption class="sr-only">Exceptions requiring review</caption>
+              <thead><tr><th>Segment</th><th>Variance</th><th>State</th></tr></thead>
+              <tbody id="exceptionRows"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <p class="demo-note">Template content is illustrative. Replace every bracketed label and the demo model with verified evidence before presenting this as a real dashboard.</p>
+    </main>
+  </div>
+
+  <div class="toast" role="status" id="toast" hidden></div>
+
+  <script>
+    // Replace this coherent demo model with supplied evidence. Keep source,
+    // freshness, unit, grain, and comparison metadata beside the values.
+    const dashboardModel = {
+      "30D": {
+        status: "[Outcome] is ahead of the prior period; [constraint] needs attention.",
+        labels: ["W1", "W2", "W3", "W4", "Now"],
+        outcome: [42, 48, 46, 55, 61],
+        volume: [31, 39, 35, 47, 58],
+        kpis: [
+          ["Primary outcome", "61.0", "+9.4% vs prior", "result"],
+          ["Target attainment", "104%", "+4 pts vs plan", "positive"],
+          ["Quality", "92.1%", "+1.2 pts vs prior", "positive"],
+          ["At-risk share", "8.6%", "−2.1 pts vs prior", "negative"]
+        ]
+      },
+      "90D": {
+        status: "The quarter recovered after a mid-period dip; two segments remain below target.",
+        labels: ["M1", "M2", "M3", "M4", "M5", "M6"],
+        outcome: [37, 44, 41, 49, 56, 64],
+        volume: [28, 32, 38, 42, 51, 55],
+        kpis: [
+          ["Primary outcome", "64.0", "+14.1% vs prior", "result"],
+          ["Target attainment", "107%", "+7 pts vs plan", "positive"],
+          ["Quality", "91.4%", "+0.5 pts vs prior", "positive"],
+          ["At-risk share", "9.8%", "−1.0 pt vs prior", "negative"]
+        ]
+      },
+      "YTD": {
+        status: "Year-to-date performance is above plan, led by the core segment and higher quality.",
+        labels: ["Jan", "Mar", "May", "Jul", "Sep", "Now"],
+        outcome: [29, 35, 43, 47, 58, 67],
+        volume: [24, 30, 34, 39, 49, 60],
+        kpis: [
+          ["Primary outcome", "67.0", "+18.7% vs prior", "result"],
+          ["Target attainment", "110%", "+10 pts vs plan", "positive"],
+          ["Quality", "93.0%", "+2.1 pts vs prior", "positive"],
+          ["At-risk share", "7.9%", "−3.3 pts vs prior", "negative"]
+        ]
+      }
+    };
+
+    const insights = [
+      ["01", "The latest interval is the strongest in the selected period.", "Validate that the increase is broad-based before changing the forecast."],
+      ["02", "Core demand explains most of the positive movement.", "The contribution ranking below separates observed drivers from commentary."],
+      ["03", "Two exceptions remain outside the preferred range.", "Select a row to coordinate the action queue with the narrative."]
+    ];
+    const drivers = [["Core segment", 88, "+12.4"], ["Quality lift", 62, "+7.8"], ["New channel", 46, "+5.1"], ["Risk drag", 27, "−2.6"]];
+    const exceptions = [["North", "−8.2%", "Review", "warn"], ["Enterprise", "−5.4%", "At risk", "bad"], ["Renewals", "−2.1%", "Watch", "warn"]];
+
+    let activePeriod = "30D";
+    let activeMeasure = "outcome";
+    let insightOffset = 0;
+
+    const svg = document.getElementById("chart");
+    const tooltip = document.getElementById("tooltip");
+    const chartWrap = document.getElementById("chartWrap");
+
+    function pointScale(values) {
+      const left = 62, right = 752, top = 28, bottom = 305;
+      const min = Math.min(...values) - 6;
+      const max = Math.max(...values) + 6;
+      return values.map((value, index) => ({
+        value,
+        x: left + (index * (right - left)) / Math.max(1, values.length - 1),
+        y: bottom - ((value - min) / Math.max(1, max - min)) * (bottom - top)
+      }));
+    }
+
+    function renderChart() {
+      const model = dashboardModel[activePeriod];
+      const values = model[activeMeasure];
+      const points = pointScale(values);
+      const path = points.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const grid = [55, 118, 181, 244, 305].map(y => `<line class="grid-line" x1="62" y1="${y}" x2="752" y2="${y}"/>`).join("");
+      const xLabels = model.labels.map((label, i) => `<text class="axis-label" text-anchor="middle" x="${points[i].x}" y="334">${label}</text>`).join("");
+      const yMin = Math.min(...values), yMax = Math.max(...values);
+      const yLabels = [yMax, Math.round((yMin + yMax) / 2), yMin].map((value, i) => `<text class="axis-label" text-anchor="end" x="49" y="${[58,183,309][i]}">${value}</text>`).join("");
+      const marks = points.map((p, i) => `
+        <g>
+          <circle class="point-hit" tabindex="0" role="button" aria-label="${model.labels[i]}: ${p.value}" data-index="${i}" cx="${p.x}" cy="${p.y}" r="10"></circle>
+          <circle class="point-mark" cx="${p.x}" cy="${p.y}" r="4.5"></circle>
+        </g>`).join("");
+      svg.innerHTML = `${grid}<path class="area" d="${path} L${points.at(-1).x},305 L${points[0].x},305 Z"></path><path class="series" d="${path}"></path>${marks}${xLabels}${yLabels}`;
+      document.getElementById("chartDesc").textContent = `${activeMeasure === "outcome" ? "Outcome" : "Volume"} moved from ${values[0]} to ${values.at(-1)} across ${activePeriod}; the latest value is ${values.at(-1)}.`;
+      svg.querySelectorAll(".point-hit").forEach(point => {
+        const reveal = () => showTooltip(point, model.labels[point.dataset.index], values[point.dataset.index]);
+        point.addEventListener("mouseenter", reveal);
+        point.addEventListener("focus", reveal);
+        point.addEventListener("mouseleave", hideTooltip);
+        point.addEventListener("blur", hideTooltip);
+      });
+    }
+
+    function showTooltip(point, label, value) {
+      const svgRect = svg.getBoundingClientRect();
+      const wrapRect = chartWrap.getBoundingClientRect();
+      tooltip.innerHTML = `<strong>${label}</strong><br>${activeMeasure === "outcome" ? "Outcome" : "Volume"}: ${value}`;
+      tooltip.hidden = false;
+      tooltip.style.left = `${point.cx.baseVal.value / 780 * svgRect.width + svgRect.left - wrapRect.left}px`;
+      tooltip.style.top = `${point.cy.baseVal.value / 360 * svgRect.height + svgRect.top - wrapRect.top}px`;
+    }
+    function hideTooltip() { tooltip.hidden = true; }
+
+    function renderKpis() {
+      document.getElementById("kpiGrid").innerHTML = dashboardModel[activePeriod].kpis.map(([label, value, compare, tone]) => `
+        <article class="kpi" data-tone="${tone}"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-compare"><b>${compare.split(" ")[0]}</b> ${compare.split(" ").slice(1).join(" ")}</div></article>`).join("");
+      document.getElementById("statusHeading").textContent = dashboardModel[activePeriod].status;
+    }
+
+    function renderInsights() {
+      const ordered = [...insights.slice(insightOffset), ...insights.slice(0, insightOffset)];
+      document.getElementById("insightList").innerHTML = ordered.map(([index, title, body]) => `<li class="insight"><span class="insight-index">${index}</span><strong>${title}</strong><p>${body}</p></li>`).join("");
+    }
+
+    document.getElementById("driverBars").innerHTML = drivers.map(([name, width, value]) => `<div class="bar-row"><span>${name}</span><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="--value:${width}%"></div></div><span class="bar-value">${value}</span></div>`).join("");
+    document.getElementById("exceptionRows").innerHTML = exceptions.map(([name, variance, state, tone], i) => `<tr tabindex="0" aria-selected="${i === 0}"><td>${name}</td><td>${variance}</td><td class="state ${tone}">${state}</td></tr>`).join("");
+
+    document.querySelectorAll("[data-period]").forEach(button => button.addEventListener("click", () => {
+      activePeriod = button.dataset.period;
+      document.querySelectorAll("[data-period]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      renderKpis(); renderChart();
+    }));
+    document.querySelectorAll("[data-measure]").forEach(button => button.addEventListener("click", () => {
+      activeMeasure = button.dataset.measure;
+      document.querySelectorAll("[data-measure]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      renderChart();
+    }));
+    document.querySelectorAll("[data-scroll]").forEach(button => button.addEventListener("click", () => {
+      document.getElementById(button.dataset.scroll).scrollIntoView({behavior: "smooth", block: "start"});
+      document.querySelectorAll("[data-scroll]").forEach(item => item.setAttribute("aria-current", String(item === button)));
+    }));
+    document.querySelectorAll("tbody tr").forEach(row => {
+      const select = () => document.querySelectorAll("tbody tr").forEach(item => item.setAttribute("aria-selected", String(item === row)));
+      row.addEventListener("click", select);
+      row.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
+    });
+    document.getElementById("cycleInsight").addEventListener("click", () => { insightOffset = (insightOffset + 1) % insights.length; renderInsights(); });
+    document.getElementById("copySummary").addEventListener("click", async () => {
+      const text = `${document.getElementById("statusHeading").textContent} ${document.getElementById("chartDesc").textContent}`;
+      try { await navigator.clipboard.writeText(text); showToast("Summary copied"); }
+      catch { showToast("Copy unavailable — select the summary manually"); }
+    });
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message; toast.hidden = false;
+      window.setTimeout(() => { toast.hidden = true; }, 2200);
+    }
+
+    renderKpis(); renderChart(); renderInsights();
+  </script>
+</body>
+</html>
